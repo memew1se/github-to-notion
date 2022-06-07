@@ -1,0 +1,18 @@
+# Own stuff
+test_main.py
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+env/
+.venv/
+.env/
+
+# IDE stuff
+.idea/
+.vscode/
+.vs/
