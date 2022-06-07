@@ -1,0 +1,5 @@
+name: github-to-notion
+description: Sync GitHub issues with Notion
+runs:
+  using: docker
+  image: Dockerfile
