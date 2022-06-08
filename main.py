@@ -7,12 +7,37 @@ EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 TOKEN = os.environ.get("NOTION_API_TOKEN")
 DATABASE_ID = os.environ.get("DATABASE_ID")
 
+BRACKET_TYPES = os.environ.get("BRACKET_TYPES")
 STATE_OPENED = os.environ.get("STATE_OPENED")
 STATE_CLOSED = os.environ.get("STATE_CLOSED")
 STATE_REOPENED = os.environ.get("STATE_REOPENED")
 
+GITHUB_TO_NOTION_ISSUE_STATES = {
+    "opened": STATE_OPENED,
+    "closed": STATE_CLOSED,
+    "reopened": STATE_REOPENED,
+}
 
-def create_issue(title, number):
+BRACKETS = {
+    "1": {
+        "left_bracket": "(",
+        "right_bracket": ")",
+    },
+    "2": {
+        "left_bracket": "[",
+        "right_bracket": "]",
+    },
+    "3": {
+        "left_bracket": "{",
+        "right_bracket": "}",
+    },
+}
+
+LB = BRACKETS[BRACKET_TYPES]["left_bracket"]
+RB = BRACKETS[BRACKET_TYPES]["right_bracket"]
+
+
+def create_page(title, issue_number):
     url = "https://api.notion.com/v1/pages"
 
     payload = {
@@ -28,7 +53,7 @@ def create_issue(title, number):
                     {
                         "type": "text",
                         "text": {
-                            "content": f"{title} #{number}",
+                            "content": f"{title} {LB}#{issue_number}{RB}",
                         },
                     }
                 ],
@@ -48,12 +73,38 @@ def create_issue(title, number):
     response = requests.post(url, json=payload, headers=headers)
 
 
-def get_issue():
+def update_page():
     pass
 
 
-def update_issue():
-    pass
+def get_page(issue_number):
+    url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
+
+    payload = {
+        "filter": {
+            "property": "title",
+            "rich_text": {"ends_with": f"{LB}#{issue_number}{RB}"},
+        },
+    }
+    headers = {
+        "Accept": "application/json",
+        "Notion-Version": "2022-02-22",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {TOKEN}",
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    results = json.loads(response.text)["results"]
+    pages_amount = len(results)
+
+    if pages_amount != 1:
+        raise ValueError(
+            f"Cannot find a specific page. Number of pages found: {pages_amount}."
+            f"Urls are: {', '.join([page['url'] for page in results])}"
+        )
+    else:
+        return results[0]
 
 
 # TO DO
@@ -75,14 +126,8 @@ def main():
     issue_title = EVENT_JSON["issue"]["title"]
     issue_number = EVENT_JSON["issue"]["number"]
 
-    GITHUB_TO_NOTION_ISSUE_STATES = {
-        "opened": STATE_OPENED,
-        "closed": STATE_CLOSED,
-        "reopened": STATE_REOPENED,
-    }
-
     if action_type == "opened":
-        create_issue(issue_title, issue_number)
+        create_page(issue_title, issue_number)
     else:
         if action_type == "edited":
             pass
@@ -96,4 +141,5 @@ def main():
             pass
 
 
-main()
+if __name__ == "__main__":
+    main()

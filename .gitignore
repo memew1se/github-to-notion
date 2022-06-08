@@ -1,5 +1,5 @@
 # Own stuff
-test_main.py
+test_*.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
