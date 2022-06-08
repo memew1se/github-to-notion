@@ -1,5 +1,8 @@
-name: github-to-notion
+name: github2notion
 description: Sync GitHub issues with Notion
 runs:
   using: docker
   image: Dockerfile
+branding:
+  icon: refresh-cw
+  color: green
