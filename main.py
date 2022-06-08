@@ -2,10 +2,14 @@ import os
 import json
 import requests
 
+from notion.client import NotionClient
+from md2notion.upload import upload
+
 # Data from GitHub environment
 EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 
-TOKEN = os.environ.get("NOTION_API_TOKEN")
+API_TOKEN = os.environ.get("NOTION_API_TOKEN")
+USER_TOKEN = os.environ.get("USER_TOKEN")
 DATABASE_ID = os.environ.get("DATABASE_ID")
 BRACKET_TYPES = os.environ.get("BRACKET_TYPES")
 
@@ -34,7 +38,7 @@ LB = BRACKETS[BRACKET_TYPES]["left_bracket"]
 RB = BRACKETS[BRACKET_TYPES]["right_bracket"]
 
 
-def create_page(title, number, labels):
+def create_page(title: str, number: str, labels: dict) -> dict:
     url = "https://api.notion.com/v1/pages"
 
     payload = {
@@ -64,17 +68,19 @@ def create_page(title, number, labels):
         "Accept": "application/json",
         "Notion-Version": "2022-02-22",
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {TOKEN}",
+        "Authorization": f"Bearer {API_TOKEN}",
     }
 
     response = requests.post(url, json=payload, headers=headers)
+
+    return json.loads(response.text)
 
 
 def update_page():
     pass
 
 
-def get_page(issue_number):
+def get_page(issue_number: str):
     url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
 
     payload = {
@@ -87,7 +93,7 @@ def get_page(issue_number):
         "Accept": "application/json",
         "Notion-Version": "2022-02-22",
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {TOKEN}",
+        "Authorization": f"Bearer {API_TOKEN}",
     }
 
     response = requests.post(url, json=payload, headers=headers)
@@ -104,9 +110,15 @@ def get_page(issue_number):
         return results[0]
 
 
-# TO DO
-# def get_issue_body():
-#     pass
+def set_body(url: str, body: str):
+    client = NotionClient(token_v2=USER_TOKEN)
+    page_block = client.get_block(url)
+
+    with open("body.md", "w") as f:
+        f.write(body)
+
+    with open("body.md", "r", encoding="utf-8") as md:
+        upload(md, page_block)
 
 
 def main():
@@ -123,9 +135,11 @@ def main():
     issue_title = EVENT_JSON["issue"]["title"]
     issue_number = EVENT_JSON["issue"]["number"]
     issue_labels = EVENT_JSON["issue"]["labels"]
+    issue_body = EVENT_JSON["issue"]["body"]
 
     if action_type == "opened":
-        create_page(issue_title, issue_number, issue_labels)
+        r = create_page(issue_title, issue_number, issue_labels)
+        set_body(r["url"], issue_body)
     else:
         if action_type == "edited":
             pass
