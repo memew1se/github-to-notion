@@ -139,6 +139,8 @@ def main():
 
     if action_type == "opened":
         r = create_page(issue_title, issue_number, issue_labels)
+        print('/' * 10)
+        print(r)
         set_body(r["url"], issue_body)
     else:
         if action_type == "edited":
