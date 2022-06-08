@@ -56,7 +56,7 @@ def create_page(title, number, labels):
                 ],
             },
             "Тип": {"select": {"name": "Задача"}},
-            "Статус": {"select": {"name": {ISSUE_STATES["opened"]}}},
+            "Статус": {"select": {"name": ISSUE_STATES["opened"]}},
             # "Вид": {"multi_select": [ISSUE_STATES[state] for state in labels]},
         },
     }
