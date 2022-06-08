@@ -4,18 +4,15 @@ import requests
 
 # Data from GitHub environment
 EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
+
 TOKEN = os.environ.get("NOTION_API_TOKEN")
 DATABASE_ID = os.environ.get("DATABASE_ID")
-
 BRACKET_TYPES = os.environ.get("BRACKET_TYPES")
-STATE_OPENED = os.environ.get("STATE_OPENED")
-STATE_CLOSED = os.environ.get("STATE_CLOSED")
-STATE_REOPENED = os.environ.get("STATE_REOPENED")
 
-GITHUB_TO_NOTION_ISSUE_STATES = {
-    "opened": STATE_OPENED,
-    "closed": STATE_CLOSED,
-    "reopened": STATE_REOPENED,
+ISSUE_STATES = {
+    "opened": "Запланировано",
+    "closed": "Сделано",
+    "reopened": "Запланировано",
 }
 
 BRACKETS = {
@@ -37,7 +34,7 @@ LB = BRACKETS[BRACKET_TYPES]["left_bracket"]
 RB = BRACKETS[BRACKET_TYPES]["right_bracket"]
 
 
-def create_page(title, issue_number):
+def create_page(title, number, labels):
     url = "https://api.notion.com/v1/pages"
 
     payload = {
@@ -53,14 +50,14 @@ def create_page(title, issue_number):
                     {
                         "type": "text",
                         "text": {
-                            "content": f"{title} {LB}#{issue_number}{RB}",
+                            "content": f"{title} {LB}#{number}{RB}",
                         },
                     }
                 ],
             },
             "Тип": {"select": {"name": "Задача"}},
-            "Статус": {"select": {"name": {STATE_OPENED}}},
-            # "Вид": {"multi_select": [{"name": "Баг"}]},
+            "Статус": {"select": {"name": {ISSUE_STATES["opened"]}}},
+            # "Вид": {"multi_select": [ISSUE_STATES[state] for state in labels]},
         },
     }
     headers = {
@@ -125,6 +122,7 @@ def main():
     action_type = EVENT_JSON["action"]
     issue_title = EVENT_JSON["issue"]["title"]
     issue_number = EVENT_JSON["issue"]["number"]
+    issue_labels = EVENT_JSON["issue"]["labels"]
 
     if action_type == "opened":
         create_page(issue_title, issue_number)
