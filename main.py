@@ -125,7 +125,7 @@ def main():
     issue_labels = EVENT_JSON["issue"]["labels"]
 
     if action_type == "opened":
-        create_page(issue_title, issue_number)
+        create_page(issue_title, issue_number, issue_labels)
     else:
         if action_type == "edited":
             pass
