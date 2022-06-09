@@ -82,9 +82,9 @@ def create_or_update_page(page: dict or None, title: str, number: str, labels: d
     else:
         response = requests.post(url, json=payload, headers=HEADERS)
 
-    print('/' * 10, 'RESPONSE', '/' * 10)
+    print('/' * 10, 'CREATE OR UPDATE RESPONSE', '/' * 10)
     print(response.text)
-    print('/' * 10, 'RESPONSE', '/' * 10)
+    print('/' * 10, 'CREATE OR UPDATE RESPONSE', '/' * 10)
     return json.loads(response.text)
 
 
@@ -113,7 +113,7 @@ def get_page(issue_number: str):
 
 
 def update_labels(page: dict, labels: dict) -> None:
-    url = "https://api.notion.com/v1/pages/" + page["url"]
+    url = "https://api.notion.com/v1/pages/" + page["id"]
 
     payload = {
         "properties": {
@@ -122,11 +122,15 @@ def update_labels(page: dict, labels: dict) -> None:
     }
 
     payload = {**PARENT, **payload}
-    requests.patch(url, json=payload, headers=HEADERS)
+    response = requests.patch(url, json=payload, headers=HEADERS)
+
+    print('/' * 10, 'UPDATE LABELS RESPONSE', '/' * 10)
+    print(response.text)
+    print('/' * 10, 'UPDATE LABELS RESPONSE', '/' * 10)
 
 
 def update_status(page: dict) -> None:
-    url = "https://api.notion.com/v1/pages/" + page["url"]
+    url = "https://api.notion.com/v1/pages/" + page["id"]
 
     payload = {
         "properties": {
@@ -135,11 +139,15 @@ def update_status(page: dict) -> None:
     }
 
     payload = {**PARENT, **payload}
-    requests.patch(url, json=payload, headers=HEADERS)
+    response = requests.patch(url, json=payload, headers=HEADERS)
+
+    print('/' * 10, 'UPDATE STATUS RESPONSE', '/' * 10)
+    print(response.text)
+    print('/' * 10, 'UPDATE STATUS RESPONSE', '/' * 10)
 
 
 def delete_page(page: dict):
-    url = "https://api.notion.com/v1/pages/" + page["url"]
+    url = "https://api.notion.com/v1/pages/" + page["id"]
 
     payload = {"archived": True}
 
@@ -173,14 +181,14 @@ def main():
 
     if action_type == "opened":
         page = create_or_update_page(None, issue_title, issue_number, issue_labels)
-        set_body(page["url"], issue_body)
+        set_body(page, issue_body)
 
     else:
         page = get_page(issue_number)
 
         if action_type == "edited":
             edited_page = create_or_update_page(page, issue_title, issue_number, issue_labels)
-            set_body(edited_page["url"], issue_body)
+            set_body(edited_page, issue_body)
 
         elif action_type == "deleted":
             delete_page(page)
