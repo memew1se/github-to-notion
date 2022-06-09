@@ -10,6 +10,20 @@ USER_TOKEN = os.environ.get("USER_TOKEN")
 DATABASE_ID = os.environ.get("DATABASE_ID")
 BRACKET_TYPES = os.environ.get("BRACKET_TYPES")
 
+HEADERS = {
+    "Accept": "application/json",
+    "Notion-Version": "2022-02-22",
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {API_TOKEN}",
+}
+
+PARENT = {
+    "parent": {
+        "type": "database_id",
+        "database_id": DATABASE_ID,
+    }
+}
+
 ISSUE_STATES = {
     "opened": "Запланировано",
     "closed": "Сделано",
@@ -35,16 +49,10 @@ LB = BRACKETS[BRACKET_TYPES]["left_bracket"]
 RB = BRACKETS[BRACKET_TYPES]["right_bracket"]
 
 
-def create_or_update_page(
-    page: dict or None, title: str, number: str, labels: dict
-) -> dict:
-    url = "https://api.notion.com/v1/pages"
+def create_page(page: dict or None, title: str, number: str, labels: dict) -> dict:
+    url = "https://api.notion.com/v1/pages/"
 
     payload = {
-        "parent": {
-            "type": "database_id",
-            "database_id": DATABASE_ID,
-        },
         "properties": {
             "Задачи": {
                 "id": "title",
@@ -64,20 +72,16 @@ def create_or_update_page(
     }
     if labels:
         payload["properties"]["Вид"] = {
-            "multi_select": [{"name": label["name"] for label in labels}]
+            "multi_select": [{"name": label["name"]} for label in labels]
         }
 
-    headers = {
-        "Accept": "application/json",
-        "Notion-Version": "2022-02-22",
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {API_TOKEN}",
-    }
+    payload = {**PARENT, **payload}
+
     if page:
-        url = url + "/" + page["id"]
-        response = requests.patch(url, json=payload, headers=headers)
+        url = url + page["id"]
+        response = requests.patch(url, json=payload, headers=HEADERS)
     else:
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=HEADERS)
 
     return json.loads(response.text)
 
@@ -95,25 +99,32 @@ def get_page(issue_number: str):
             "rich_text": {"ends_with": f"{LB}#{issue_number}{RB}"},
         },
     }
-    headers = {
-        "Accept": "application/json",
-        "Notion-Version": "2022-02-22",
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {API_TOKEN}",
-    }
 
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.post(url, json=payload, headers=HEADERS)
 
     results = json.loads(response.text)["results"]
     pages_amount = len(results)
 
     if pages_amount != 1:
         raise ValueError(
-            f"Cannot find a specific page. Number of pages found: {pages_amount}."
+            f"Cannot find a specific page. Number of pages found: {pages_amount}. "
             f"Urls are: {', '.join([page['url'] for page in results])}"
         )
     else:
         return results[0]
+
+
+def update_labels(page: dict, labels: dict):
+    url = "https://api.notion.com/v1/pages/" + page["url"]
+
+    payload = {
+        "properties": {
+            "Вид": {"multi_select": [{"name": label["name"]} for label in labels]},
+        },
+    }
+
+    payload = {**PARENT, **payload}
+    requests.patch(url, json=payload, headers=HEADERS)
 
 
 def delete_page(page: dict):
@@ -141,20 +152,20 @@ def main():
     issue_body = EVENT_JSON["issue"]["body"]
 
     if action_type == "opened":
-        page_info = create_or_update_page(None, issue_title, issue_number, issue_labels)
-        set_body(page_info["url"], issue_body)
+        page = create_page(None, issue_title, issue_number, issue_labels)
+        set_body(page["url"], issue_body)
 
     else:
         page = get_page(issue_number)
 
         if action_type == "edited":
-            page_info = create_or_update_page(
-                page, issue_title, issue_number, issue_labels
-            )
-            set_body(page_info["url"], issue_body)
+            pass
 
         elif action_type == "deleted":
             delete_page(page)
+
+        elif action_type == "labeled" or action_type == "unlabeled":
+            update_labels(page, issue_labels)
 
         else:
             print("-" * 15, "WARNING", "-" * 15)
