@@ -136,7 +136,12 @@ def update_status(page: dict) -> None:
 
 
 def delete_page(page: dict):
-    pass
+    url = "https://api.notion.com/v1/pages/" + page["url"]
+
+    payload = {"archived": True}
+
+    payload = {**PARENT, **payload}
+    requests.patch(url, json=payload, headers=HEADERS)
 
 
 def set_body(url: str, body: str):
