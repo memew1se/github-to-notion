@@ -2,9 +2,6 @@ import os
 import json
 import requests
 
-from notion.client import NotionClient
-from md2notion.upload import upload
-
 # Data from GitHub environment
 EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 
@@ -38,7 +35,9 @@ LB = BRACKETS[BRACKET_TYPES]["left_bracket"]
 RB = BRACKETS[BRACKET_TYPES]["right_bracket"]
 
 
-def create_page(title: str, number: str, labels: dict) -> dict:
+def create_or_update_page(
+    page: dict or None, title: str, number: str, labels: dict
+) -> dict:
     url = "https://api.notion.com/v1/pages"
 
     payload = {
@@ -61,23 +60,30 @@ def create_page(title: str, number: str, labels: dict) -> dict:
             },
             "Тип": {"select": {"name": "Задача"}},
             "Статус": {"select": {"name": ISSUE_STATES["opened"]}},
-            "Вид": {"multi_select": [{"name": label["name"] for label in labels}]},
         },
     }
+    if labels:
+        payload["properties"]["Вид"] = {
+            "multi_select": [{"name": label["name"] for label in labels}]
+        }
+
     headers = {
         "Accept": "application/json",
         "Notion-Version": "2022-02-22",
         "Content-Type": "application/json",
         "Authorization": f"Bearer {API_TOKEN}",
     }
-
-    response = requests.post(url, json=payload, headers=headers)
+    if page:
+        url = url + "/" + page["id"]
+        response = requests.patch(url, json=payload, headers=headers)
+    else:
+        response = requests.post(url, json=payload, headers=headers)
 
     return json.loads(response.text)
 
 
-def update_page():
-    pass
+def update_page(page: dict, title: str, number: str, labels: dict):
+    return dict()
 
 
 def get_page(issue_number: str):
@@ -110,15 +116,12 @@ def get_page(issue_number: str):
         return results[0]
 
 
+def delete_page(page: dict):
+    pass
+
+
 def set_body(url: str, body: str):
-    client = NotionClient(token_v2=USER_TOKEN)
-    page_block = client.get_block(url)
-
-    with open("body.md", "w") as f:
-        f.write(body)
-
-    with open("body.md", "r", encoding="utf-8") as md:
-        upload(md, page_block)
+    pass
 
 
 def main():
@@ -127,9 +130,9 @@ def main():
 
     EVENT_JSON = json.loads(EVENT_STR)
 
-    print("-" * 10, "TEST", "-" * 10)
+    print("-" * 15, "TEST", "-" * 15)
     print(EVENT_JSON)
-    print("-" * 10, "TEST", "-" * 10)
+    print("-" * 15, "TEST", "-" * 15)
 
     action_type = EVENT_JSON["action"]
     issue_title = EVENT_JSON["issue"]["title"]
@@ -138,21 +141,25 @@ def main():
     issue_body = EVENT_JSON["issue"]["body"]
 
     if action_type == "opened":
-        r = create_page(issue_title, issue_number, issue_labels)
-        print('/' * 10)
-        print(r)
-        set_body(r["url"], issue_body)
+        page_info = create_or_update_page(None, issue_title, issue_number, issue_labels)
+        set_body(page_info["url"], issue_body)
+
     else:
+        page = get_page(issue_number)
+
         if action_type == "edited":
-            pass
-        elif action_type == "closed":
-            pass
+            page_info = create_or_update_page(
+                page, issue_title, issue_number, issue_labels
+            )
+            set_body(page_info["url"], issue_body)
+
         elif action_type == "deleted":
-            pass
-        elif action_type == "reopened":
-            pass
-        elif action_type == "labeled" or action_type == "unlabeled":
-            pass
+            delete_page(page)
+
+        else:
+            print("-" * 15, "WARNING", "-" * 15)
+            print(f"Unsupported action type! Action: {action_type}")
+            print("-" * 15, "WARNING", "-" * 15)
 
 
 if __name__ == "__main__":
