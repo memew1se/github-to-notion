@@ -48,7 +48,9 @@ LB = BRACKETS[BRACKET_TYPES]["left_bracket"]
 RB = BRACKETS[BRACKET_TYPES]["right_bracket"]
 
 
-def create_or_update_page(page: dict or None, title: str, number: str, labels: dict) -> dict:
+def create_or_update_page(
+    page: dict or None, title: str, number: str, labels: dict
+) -> dict:
     url = "https://api.notion.com/v1/pages/"
 
     payload = {
@@ -82,9 +84,9 @@ def create_or_update_page(page: dict or None, title: str, number: str, labels: d
     else:
         response = requests.post(url, json=payload, headers=HEADERS)
 
-    print('/' * 10, 'CREATE OR UPDATE RESPONSE', '/' * 10)
+    print("/" * 10, "CREATE OR UPDATE RESPONSE", "/" * 10)
     print(response.text)
-    print('/' * 10, 'CREATE OR UPDATE RESPONSE', '/' * 10)
+    print("/" * 10, "CREATE OR UPDATE RESPONSE", "/" * 10)
     return json.loads(response.text)
 
 
@@ -124,9 +126,9 @@ def update_labels(page: dict, labels: dict) -> None:
     payload = {**PARENT, **payload}
     response = requests.patch(url, json=payload, headers=HEADERS)
 
-    print('/' * 10, 'UPDATE LABELS RESPONSE', '/' * 10)
+    print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
     print(response.text)
-    print('/' * 10, 'UPDATE LABELS RESPONSE', '/' * 10)
+    print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
 
 
 def update_status(page: dict) -> None:
@@ -141,9 +143,9 @@ def update_status(page: dict) -> None:
     payload = {**PARENT, **payload}
     response = requests.patch(url, json=payload, headers=HEADERS)
 
-    print('/' * 10, 'UPDATE STATUS RESPONSE', '/' * 10)
+    print("/" * 10, "UPDATE STATUS RESPONSE", "/" * 10)
     print(response.text)
-    print('/' * 10, 'UPDATE STATUS RESPONSE', '/' * 10)
+    print("/" * 10, "UPDATE STATUS RESPONSE", "/" * 10)
 
 
 def delete_page(page: dict):
@@ -154,9 +156,9 @@ def delete_page(page: dict):
     payload = {**PARENT, **payload}
     response = requests.patch(url, json=payload, headers=HEADERS)
 
-    print('/' * 10, 'DELETE RESPONSE', '/' * 10)
+    print("/" * 10, "DELETE RESPONSE", "/" * 10)
     print(response.text)
-    print('/' * 10, 'DELETE RESPONSE', '/' * 10)
+    print("/" * 10, "DELETE RESPONSE", "/" * 10)
 
 
 def set_body(url: str, body: str):
@@ -187,7 +189,9 @@ def main():
         page = get_page(issue_number)
 
         if action_type == "edited":
-            edited_page = create_or_update_page(page, issue_title, issue_number, issue_labels)
+            edited_page = create_or_update_page(
+                page, issue_title, issue_number, issue_labels
+            )
             set_body(edited_page, issue_body)
 
         elif action_type == "deleted":
