@@ -6,7 +6,6 @@ import requests
 EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 
 API_TOKEN = os.environ.get("NOTION_API_TOKEN")
-USER_TOKEN = os.environ.get("USER_TOKEN")
 DATABASE_ID = os.environ.get("DATABASE_ID")
 BRACKET_TYPES = os.environ.get("BRACKET_TYPES")
 
@@ -49,7 +48,7 @@ LB = BRACKETS[BRACKET_TYPES]["left_bracket"]
 RB = BRACKETS[BRACKET_TYPES]["right_bracket"]
 
 
-def create_page(page: dict or None, title: str, number: str, labels: dict) -> dict:
+def create_or_update_page(page: dict or None, title: str, number: str, labels: dict) -> dict:
     url = "https://api.notion.com/v1/pages/"
 
     payload = {
@@ -86,10 +85,6 @@ def create_page(page: dict or None, title: str, number: str, labels: dict) -> di
     return json.loads(response.text)
 
 
-def update_page(page: dict, title: str, number: str, labels: dict):
-    return dict()
-
-
 def get_page(issue_number: str):
     url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
 
@@ -114,12 +109,25 @@ def get_page(issue_number: str):
         return results[0]
 
 
-def update_labels(page: dict, labels: dict):
+def update_labels(page: dict, labels: dict) -> None:
     url = "https://api.notion.com/v1/pages/" + page["url"]
 
     payload = {
         "properties": {
             "Вид": {"multi_select": [{"name": label["name"]} for label in labels]},
+        },
+    }
+
+    payload = {**PARENT, **payload}
+    requests.patch(url, json=payload, headers=HEADERS)
+
+
+def update_status(page: dict) -> None:
+    url = "https://api.notion.com/v1/pages/" + page["url"]
+
+    payload = {
+        "properties": {
+            "Статус": {"select": {"name": ISSUE_STATES["closed"]}},
         },
     }
 
@@ -152,17 +160,21 @@ def main():
     issue_body = EVENT_JSON["issue"]["body"]
 
     if action_type == "opened":
-        page = create_page(None, issue_title, issue_number, issue_labels)
+        page = create_or_update_page(None, issue_title, issue_number, issue_labels)
         set_body(page["url"], issue_body)
 
     else:
         page = get_page(issue_number)
 
         if action_type == "edited":
-            pass
+            edited_page = create_or_update_page(page, issue_title, issue_number, issue_labels)
+            set_body(edited_page["url"], issue_body)
 
         elif action_type == "deleted":
             delete_page(page)
+
+        elif action_type == "closed":
+            update_status(page)
 
         elif action_type == "labeled" or action_type == "unlabeled":
             update_labels(page, issue_labels)
