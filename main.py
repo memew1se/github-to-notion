@@ -82,6 +82,9 @@ def create_or_update_page(page: dict or None, title: str, number: str, labels: d
     else:
         response = requests.post(url, json=payload, headers=HEADERS)
 
+    print('/' * 10, 'RESPONSE', '/' * 10)
+    print(response.text)
+    print('/' * 10, 'RESPONSE', '/' * 10)
     return json.loads(response.text)
 
 
@@ -141,7 +144,11 @@ def delete_page(page: dict):
     payload = {"archived": True}
 
     payload = {**PARENT, **payload}
-    requests.patch(url, json=payload, headers=HEADERS)
+    response = requests.patch(url, json=payload, headers=HEADERS)
+
+    print('/' * 10, 'DELETE RESPONSE', '/' * 10)
+    print(response.text)
+    print('/' * 10, 'DELETE RESPONSE', '/' * 10)
 
 
 def set_body(url: str, body: str):
