@@ -68,13 +68,14 @@ def create_or_update_page(
                 ],
             },
             "Тип": {"select": {"name": "Задача"}},
-            "Статус": {"select": {"name": ISSUE_STATES["opened"]}},
         },
     }
     if labels:
         payload["properties"]["Вид"] = {
             "multi_select": [{"name": label["name"]} for label in labels]
         }
+    if not page:
+        payload["properties"]["Статус"] = {"select": {"name": ISSUE_STATES["opened"]}}
 
     payload = {**PARENT, **payload}
 
@@ -161,7 +162,7 @@ def delete_page(page: dict):
     print("/" * 10, "DELETE RESPONSE", "/" * 10)
 
 
-def set_body(url: str, body: str):
+def set_body(page: dict):
     pass
 
 
@@ -179,20 +180,18 @@ def main():
     issue_title = EVENT_JSON["issue"]["title"]
     issue_number = EVENT_JSON["issue"]["number"]
     issue_labels = EVENT_JSON["issue"]["labels"]
-    issue_body = EVENT_JSON["issue"]["body"]
 
     if action_type == "opened":
         page = create_or_update_page(None, issue_title, issue_number, issue_labels)
-        set_body(page, issue_body)
+        set_body(page)
 
     else:
         page = get_page(issue_number)
 
         if action_type == "edited":
-            edited_page = create_or_update_page(
+            create_or_update_page(
                 page, issue_title, issue_number, issue_labels
             )
-            set_body(edited_page, issue_body)
 
         elif action_type == "deleted":
             delete_page(page)
