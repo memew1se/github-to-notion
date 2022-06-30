@@ -8,6 +8,7 @@ EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 API_TOKEN = os.environ.get("NOTION_API_TOKEN")
 DATABASE_ID = os.environ.get("DATABASE_ID")
 BRACKET_TYPES = os.environ.get("BRACKET_TYPES")
+PROJECT_NAME = os.environ.get("PROJECT_NAME")
 AUTHORS_ID = json.loads(os.environ.get("AUTHORS_ID"))
 
 HEADERS = {
@@ -24,12 +25,14 @@ PARENT = {
     }
 }
 
+# Property
 ISSUE_STATES = {
     "opened": "Запланировано",
     "closed": "Сделано",
     "reopened": "Запланировано",
 }
 
+# Property
 BRACKETS = {
     "1": {
         "left_bracket": "(",
@@ -84,6 +87,8 @@ def create_or_update_page(
             },
         },
     }
+    if PROJECT_NAME:
+        payload["properties"]["Проект"] = {"select": {"name": PROJECT_NAME}}
     if labels:
         payload["properties"]["Вид"] = {
             "multi_select": [{"name": label["name"]} for label in labels]
