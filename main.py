@@ -61,7 +61,7 @@ RB = BRACKETS[BRACKET_TYPES]["right_bracket"]
 
 
 def create_or_update_page(
-    page: dict or None, title: str, number: str, labels: dict, author: str
+        page: dict or None, title: str, number: str, labels: dict, author: str
 ) -> dict:
     url = "https://api.notion.com/v1/pages/"
 
@@ -219,7 +219,14 @@ def main():
     issue_title = EVENT_JSON["issue"]["title"]
     issue_number = EVENT_JSON["issue"]["number"]
     issue_labels = EVENT_JSON["issue"]["labels"]
-    issue_author = EVENT_JSON["issue"]["assignee"]["login"]
+
+    try:
+        issue_author = EVENT_JSON["issue"]["assignee"]["login"]
+    except TypeError as e:
+        print("!" * 15, "ERROR", "!" * 15)
+        print(e)
+        print("!" * 15, "ERROR", "!" * 15)
+        issue_author = ""
 
     if action_type == "opened":
         page = create_or_update_page(
