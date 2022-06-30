@@ -9,7 +9,7 @@ API_TOKEN = os.environ.get("NOTION_API_TOKEN")
 DATABASE_ID = os.environ.get("DATABASE_ID")
 BRACKET_TYPES = os.environ.get("BRACKET_TYPES")
 PROJECT_NAME = os.environ.get("PROJECT_NAME")
-AUTHORS_ID = json.loads(os.environ.get("AUTHORS_ID"))
+AUTHORS_IDS = json.loads(os.environ.get("AUTHORS_IDS"))
 
 HEADERS = {
     "Accept": "application/json",
@@ -83,7 +83,7 @@ def create_or_update_page(
             "Ответственный": {
                 "id": "%24v1Q",
                 "type": "people",
-                "people": [{"id": AUTHORS_ID[author]}],
+                "people": [{"id": AUTHORS_IDS[author]}],
             },
         },
     }
