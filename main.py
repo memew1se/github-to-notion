@@ -187,6 +187,20 @@ def update_assignee(page, author: str):
     patch_page(page, payload)
 
 
+def remove_assignee(page):
+    payload = {
+        "properties": {
+            "Ответственный": {
+                "id": "%24v1Q",
+                "type": "people",
+                "people": [],
+            },
+        },
+    }
+    payload = {**PARENT, **payload}
+    patch_page(page, payload)
+
+
 def set_body(page: dict):
     pass
 
@@ -229,6 +243,9 @@ def main():
 
         elif action_type == "assigned":
             update_assignee(page, issue_author)
+
+        elif action_type == "unassigned":
+            remove_assignee(page)
 
         elif action_type == "labeled" or action_type == "unlabeled":
             update_labels(page, issue_labels)
