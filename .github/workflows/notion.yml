@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: github2notion
-        uses: Pacific-Agency/github-to-notion@v0.2.2
+        uses: Pacific-Agency/github-to-notion@v0.2.3
         env:
           NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
           DATABASE_ID: ${{ secrets.DATABASE_ID }}
