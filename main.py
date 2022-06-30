@@ -182,6 +182,27 @@ def delete_page(page: dict):
     print("/" * 10, "DELETE RESPONSE", "/" * 10)
 
 
+def update_assignee(page, author: str):
+    url = "https://api.notion.com/v1/pages/" + page["id"]
+
+    payload = {
+        "properties": {
+            "Ответственный": {
+                "id": "%24v1Q",
+                "type": "people",
+                "people": [{"id": AUTHORS_IDS[author]}],
+            },
+        },
+    }
+
+    payload = {**PARENT, **payload}
+    response = requests.patch(url, json=payload, headers=HEADERS)
+
+    print("/" * 10, "UPDATE STATUS RESPONSE", "/" * 10)
+    print(response.text)
+    print("/" * 10, "UPDATE STATUS RESPONSE", "/" * 10)
+
+
 def set_body(page: dict):
     pass
 
@@ -221,6 +242,9 @@ def main():
 
         elif action_type == "closed":
             update_status(page)
+
+        elif action_type == "assigned":
+            update_assignee(page, issue_author)
 
         elif action_type == "labeled" or action_type == "unlabeled":
             update_labels(page, issue_labels)
