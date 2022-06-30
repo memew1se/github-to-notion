@@ -80,6 +80,7 @@ def create_or_update_page(
                 ],
             },
             "Тип": {"select": {"name": "Задача"}},
+            "Приоритет": {"select": {"name": "P3"}},
             "Ответственный": {
                 "id": "%24v1Q",
                 "type": "people",
