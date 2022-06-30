@@ -8,6 +8,7 @@ EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 API_TOKEN = os.environ.get("NOTION_API_TOKEN")
 DATABASE_ID = os.environ.get("DATABASE_ID")
 BRACKET_TYPES = os.environ.get("BRACKET_TYPES")
+AUTHORS_ID = json.loads(os.environ.get("AUTHORS_ID"))
 
 HEADERS = {
     "Accept": "application/json",
@@ -42,6 +43,14 @@ BRACKETS = {
         "left_bracket": "{",
         "right_bracket": "}",
     },
+    "4": {
+        "left_bracket": "<",
+        "right_bracket": ">",
+    },
+    "5": {
+        "left_bracket": "«",
+        "right_bracket": "»",
+    },
 }
 
 LB = BRACKETS[BRACKET_TYPES]["left_bracket"]
@@ -49,7 +58,7 @@ RB = BRACKETS[BRACKET_TYPES]["right_bracket"]
 
 
 def create_or_update_page(
-    page: dict or None, title: str, number: str, labels: dict
+    page: dict or None, title: str, number: str, labels: dict, author: str
 ) -> dict:
     url = "https://api.notion.com/v1/pages/"
 
@@ -68,6 +77,11 @@ def create_or_update_page(
                 ],
             },
             "Тип": {"select": {"name": "Задача"}},
+            "Ответственный": {
+                "id": "%24v1Q",
+                "type": "people",
+                "people": [{"id": AUTHORS_ID[author]}],
+            },
         },
     }
     if labels:
@@ -180,9 +194,12 @@ def main():
     issue_title = EVENT_JSON["issue"]["title"]
     issue_number = EVENT_JSON["issue"]["number"]
     issue_labels = EVENT_JSON["issue"]["labels"]
+    issue_author = EVENT_JSON["issue"]["assignee"]["login"]
 
     if action_type == "opened":
-        page = create_or_update_page(None, issue_title, issue_number, issue_labels)
+        page = create_or_update_page(
+            None, issue_title, issue_number, issue_labels, issue_author
+        )
         set_body(page)
 
     else:
@@ -190,7 +207,7 @@ def main():
 
         if action_type == "edited":
             create_or_update_page(
-                page, issue_title, issue_number, issue_labels
+                page, issue_title, issue_number, issue_labels, issue_author
             )
 
         elif action_type == "deleted":
