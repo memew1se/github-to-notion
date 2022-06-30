@@ -135,56 +135,45 @@ def get_page(issue_number: str):
         return results[0]
 
 
-def update_labels(page: dict, labels: dict) -> None:
+def patch_page(page, payload: dict):
     url = "https://api.notion.com/v1/pages/" + page["id"]
 
+    payload = {**PARENT, **payload}
+
+    response = requests.patch(url, json=payload, headers=HEADERS)
+
+    print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
+    print(response.text)
+    print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
+
+
+def update_labels(page: dict, labels: dict) -> None:
     payload = {
         "properties": {
             "Вид": {"multi_select": [{"name": label["name"]} for label in labels]},
         },
     }
-
     payload = {**PARENT, **payload}
-    response = requests.patch(url, json=payload, headers=HEADERS)
-
-    print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
-    print(response.text)
-    print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
+    patch_page(page, payload)
 
 
 def update_status(page: dict) -> None:
-    url = "https://api.notion.com/v1/pages/" + page["id"]
-
     payload = {
         "properties": {
             "Статус": {"select": {"name": ISSUE_STATES["closed"]}},
         },
     }
-
     payload = {**PARENT, **payload}
-    response = requests.patch(url, json=payload, headers=HEADERS)
-
-    print("/" * 10, "UPDATE STATUS RESPONSE", "/" * 10)
-    print(response.text)
-    print("/" * 10, "UPDATE STATUS RESPONSE", "/" * 10)
+    patch_page(page, payload)
 
 
 def delete_page(page: dict):
-    url = "https://api.notion.com/v1/pages/" + page["id"]
-
     payload = {"archived": True}
-
     payload = {**PARENT, **payload}
-    response = requests.patch(url, json=payload, headers=HEADERS)
-
-    print("/" * 10, "DELETE RESPONSE", "/" * 10)
-    print(response.text)
-    print("/" * 10, "DELETE RESPONSE", "/" * 10)
+    patch_page(page, payload)
 
 
 def update_assignee(page, author: str):
-    url = "https://api.notion.com/v1/pages/" + page["id"]
-
     payload = {
         "properties": {
             "Ответственный": {
@@ -194,13 +183,8 @@ def update_assignee(page, author: str):
             },
         },
     }
-
     payload = {**PARENT, **payload}
-    response = requests.patch(url, json=payload, headers=HEADERS)
-
-    print("/" * 10, "UPDATE STATUS RESPONSE", "/" * 10)
-    print(response.text)
-    print("/" * 10, "UPDATE STATUS RESPONSE", "/" * 10)
+    patch_page(page, payload)
 
 
 def set_body(page: dict):
@@ -213,9 +197,9 @@ def main():
 
     EVENT_JSON = json.loads(EVENT_STR)
 
-    print("-" * 15, "TEST", "-" * 15)
+    print("-" * 15, "EVENT_JSON", "-" * 15)
     print(EVENT_JSON)
-    print("-" * 15, "TEST", "-" * 15)
+    print("-" * 15, "EVENT_JSON", "-" * 15)
 
     action_type = EVENT_JSON["action"]
     issue_title = EVENT_JSON["issue"]["title"]
