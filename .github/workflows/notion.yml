@@ -1,0 +1,16 @@
+name: issue_to_notion
+on:
+  issues:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: github2notion
+        uses: Pacific-Agency/github-to-notion@v0.2.1
+        env:
+          NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
+          DATABASE_ID: ${{ secrets.DATABASE_ID }}
+          BRACKET_TYPES: 4
+          PROJECT_NAME: Olymp Group
+          AUTHORS_IDS : ${{ secrets.AUTHORS_IDS }}
