@@ -2,22 +2,28 @@ import os
 import json
 import requests
 
-# Data from GitHub environment
+from utils import parse_env_variables_to_properties
+
+# Payload from GitHub event webhook
 EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 
+# Github secrets and environment variables
 API_TOKEN = os.environ.get("NOTION_API_TOKEN")
 DATABASE_ID = os.environ.get("DATABASE_ID")
-BRACKET_TYPES = os.environ.get("BRACKET_TYPES")
-PROJECT_NAME = os.environ.get("PROJECT_NAME")
+BRACKET_TYPE = os.environ.get("BRACKET_TYPE")
 AUTHORS_IDS = json.loads(os.environ.get("AUTHORS_IDS"))
 
+CUSTOM_PROPERTIES = parse_env_variables_to_properties()
+
+# Authentication
 HEADERS = {
     "Accept": "application/json",
-    "Notion-Version": "2022-02-22",
+    "Notion-Version": "2022-06-28",
     "Content-Type": "application/json",
     "Authorization": f"Bearer {API_TOKEN}",
 }
 
+# Database
 PARENT = {
     "parent": {
         "type": "database_id",
@@ -56,12 +62,16 @@ BRACKETS = {
     },
 }
 
-LB = BRACKETS[BRACKET_TYPES]["left_bracket"]
-RB = BRACKETS[BRACKET_TYPES]["right_bracket"]
+LB = BRACKETS[BRACKET_TYPE]["left_bracket"]
+RB = BRACKETS[BRACKET_TYPE]["right_bracket"]
 
 
 def create_or_update_page(
-        page: dict or None, title: str, number: str, labels: dict, author: str
+    page: dict or None,
+    issue_title: str,
+    issue_number: str,
+    issue_labels: dict,
+    issue_assignee: str,
 ) -> dict:
     url = "https://api.notion.com/v1/pages/"
 
@@ -74,25 +84,21 @@ def create_or_update_page(
                     {
                         "type": "text",
                         "text": {
-                            "content": f"{title} {LB}#{number}{RB}",
+                            "content": f"{issue_title} {LB}#{issue_number}{RB}",
                         },
                     }
                 ],
             },
-            "Тип": {"select": {"name": "Задача"}},
-            "Приоритет": {"select": {"name": "P3"}},
             "Ответственный": {
                 "id": "%24v1Q",
                 "type": "people",
-                "people": [{"id": AUTHORS_IDS[author]}],
+                "people": [{"id": AUTHORS_IDS[issue_assignee]}],
             },
         },
     }
-    if PROJECT_NAME:
-        payload["properties"]["Проект"] = {"select": {"name": PROJECT_NAME}}
-    if labels:
+    if issue_labels:
         payload["properties"]["Вид"] = {
-            "multi_select": [{"name": label["name"]} for label in labels]
+            "multi_select": [{"name": label["name"]} for label in issue_labels]
         }
     if not page:
         payload["properties"]["Статус"] = {"select": {"name": ISSUE_STATES["opened"]}}
@@ -103,6 +109,7 @@ def create_or_update_page(
         url = url + page["id"]
         response = requests.patch(url, json=payload, headers=HEADERS)
     else:
+        payload["properties"].update(CUSTOM_PROPERTIES)
         response = requests.post(url, json=payload, headers=HEADERS)
 
     print("/" * 10, "CREATE OR UPDATE RESPONSE", "/" * 10)
