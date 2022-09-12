@@ -8,11 +8,12 @@ from utils import parse_env_variables_to_properties
 EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 
 # Github secrets and environment variables
-API_TOKEN = os.environ.get("NOTION_API_TOKEN")
+API_TOKEN = os.environ["NOTION_API_TOKEN"]
 AUTHORS_IDS = json.loads(os.environ.get("AUTHORS_IDS"))
-BRACKET_TYPE = os.environ.get("BRACKET_TYPE")
-DATABASE_ID = os.environ.get("DATABASE_ID")
+BRACKET_TYPE = os.environ["BRACKET_TYPE"]
+DATABASE_ID = os.environ["DATABASE_ID"]
 DEBUGGING = os.environ.get("DEBUGGING")
+TITLE_PROPERTY_NAME = os.environ["TITLE_PROPERTY_NAME"]
 
 CUSTOM_PROPERTIES = parse_env_variables_to_properties()
 
@@ -71,25 +72,19 @@ with open(EVENT_PATH, "r") as f:
 
 
 def create_or_update_page(
-    page: dict or None,
+    page: dict | None,
     issue_title: str,
     issue_number: str,
     issue_labels: dict,
     issue_assignee: str,
 ) -> dict:
     url = "https://api.notion.com/v1/pages/"
-
     payload = {
         "properties": {
-            "Задачи": {
-                "id": "title",
-                "type": "title",
+            TITLE_PROPERTY_NAME: {
                 "title": [
                     {
-                        "type": "text",
-                        "text": {
-                            "content": f"{issue_title} {LB}#{issue_number}{RB}",
-                        },
+                        "text": {"content": f"{issue_title} {LB}#{issue_number}{RB}"},
                     }
                 ],
             },
@@ -100,6 +95,7 @@ def create_or_update_page(
             },
         },
     }
+
     if issue_labels:
         payload["properties"]["Вид"] = {
             "multi_select": [{"name": label["name"]} for label in issue_labels]
@@ -125,7 +121,6 @@ def create_or_update_page(
 
 def get_page(issue_number: str):
     url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
-
     payload = {
         "filter": {
             "property": "title",
