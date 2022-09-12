@@ -13,7 +13,9 @@ AUTHORS_IDS = json.loads(os.environ.get("AUTHORS_IDS"))
 BRACKET_TYPE = os.environ["BRACKET_TYPE"]
 DATABASE_ID = os.environ["DATABASE_ID"]
 DEBUGGING = os.environ.get("DEBUGGING")
+
 TITLE_PROPERTY_NAME = os.environ["TITLE_PROPERTY_NAME"]
+LABELS_PROPERTY_NAME = os.environ["LABELS_PROPERTY_NAME"]
 
 CUSTOM_PROPERTIES = parse_env_variables_to_properties()
 
@@ -97,7 +99,7 @@ def create_or_update_page(
     }
 
     if issue_labels:
-        payload["properties"]["Вид"] = {
+        payload["properties"][LABELS_PROPERTY_NAME] = {
             "multi_select": [{"name": label["name"]} for label in issue_labels]
         }
     if not page:
@@ -156,7 +158,9 @@ def patch_page(page, payload: dict):
 def update_labels(page: dict, labels: dict) -> None:
     payload = {
         "properties": {
-            "Вид": {"multi_select": [{"name": label["name"]} for label in labels]},
+            LABELS_PROPERTY_NAME: {
+                "multi_select": [{"name": label["name"]} for label in labels]
+            },
         },
     }
     payload = {**PARENT, **payload}
