@@ -9,9 +9,10 @@ EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 
 # Github secrets and environment variables
 API_TOKEN = os.environ.get("NOTION_API_TOKEN")
-DATABASE_ID = os.environ.get("DATABASE_ID")
-BRACKET_TYPE = os.environ.get("BRACKET_TYPE")
 AUTHORS_IDS = json.loads(os.environ.get("AUTHORS_IDS"))
+BRACKET_TYPE = os.environ.get("BRACKET_TYPE")
+DATABASE_ID = os.environ.get("DATABASE_ID")
+DEBUGGING = os.environ.get("DEBUGGING")
 
 CUSTOM_PROPERTIES = parse_env_variables_to_properties()
 
@@ -65,6 +66,9 @@ BRACKETS = {
 LB = BRACKETS[BRACKET_TYPE]["left_bracket"]
 RB = BRACKETS[BRACKET_TYPE]["right_bracket"]
 
+with open(EVENT_PATH, "r") as f:
+    EVENT_JSON = json.loads(f.read())
+
 
 def create_or_update_page(
     page: dict or None,
@@ -112,9 +116,10 @@ def create_or_update_page(
         payload["properties"].update(CUSTOM_PROPERTIES)
         response = requests.post(url, json=payload, headers=HEADERS)
 
-    print("/" * 10, "CREATE OR UPDATE RESPONSE", "/" * 10)
-    print(response.text)
-    print("/" * 10, "CREATE OR UPDATE RESPONSE", "/" * 10)
+    if DEBUGGING:
+        print("/" * 10, "CREATE OR UPDATE RESPONSE", "/" * 10)
+        print(response.text)
+        print("/" * 10, "CREATE OR UPDATE RESPONSE", "/" * 10)
     return json.loads(response.text)
 
 
@@ -144,14 +149,13 @@ def get_page(issue_number: str):
 
 def patch_page(page, payload: dict):
     url = "https://api.notion.com/v1/pages/" + page["id"]
-
     payload = {**PARENT, **payload}
-
     response = requests.patch(url, json=payload, headers=HEADERS)
 
-    print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
-    print(response.text)
-    print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
+    if DEBUGGING:
+        print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
+        print(response.text)
+        print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
 
 
 def update_labels(page: dict, labels: dict) -> None:
@@ -213,14 +217,10 @@ def set_body(page: dict):
 
 
 def main():
-    with open(EVENT_PATH, "r") as f:
-        EVENT_STR = f.read()
-
-    EVENT_JSON = json.loads(EVENT_STR)
-
-    print("-" * 15, "EVENT_JSON", "-" * 15)
-    print(EVENT_JSON)
-    print("-" * 15, "EVENT_JSON", "-" * 15)
+    if DEBUGGING:
+        print("-" * 15, "EVENT_JSON", "-" * 15)
+        print(EVENT_JSON)
+        print("-" * 15, "EVENT_JSON", "-" * 15)
 
     action_type = EVENT_JSON["action"]
     issue_title = EVENT_JSON["issue"]["title"]
