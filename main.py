@@ -8,18 +8,18 @@ from utils import parse_env_variables_to_properties
 EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 
 # Github secrets and environment variables
-API_TOKEN = os.environ["NOTION_API_TOKEN"]
 BRACKET_TYPE = os.environ["BRACKET_TYPE"]
 DATABASE_ID = os.environ["DATABASE_ID"]
 DEBUGGING = os.environ.get("DEBUGGING")
+NOTION_API_TOKEN = os.environ["NOTION_API_TOKEN"]
 
 ASSIGNEES_PROPERTY_NAME = os.environ["ASSIGNEES_PROPERTY_NAME"]
 LABELS_PROPERTY_NAME = os.environ["LABELS_PROPERTY_NAME"]
 STATUS_PROPERTY_NAME = os.environ["STATUS_PROPERTY_NAME"]
 TITLE_PROPERTY_NAME = os.environ["TITLE_PROPERTY_NAME"]
 
-GITHUB_ASSIGNEES_TO_NOTION = json.loads(os.environ.get("GITHUB_ASSIGNEES_TO_NOTION"))
-GITHUB_STATUSES_TO_NOTION = json.loads(os.environ["GITHUB_STATUSES_TO_NOTION"])
+GH_ASSIGNEES_TO_NOTION = json.loads(os.environ.get("GH_ASSIGNEES_TO_NOTION"))
+GH_STATUSES_TO_NOTION = json.loads(os.environ["GH_STATUSES_TO_NOTION"])
 
 CUSTOM_PROPERTIES = parse_env_variables_to_properties()
 
@@ -28,7 +28,7 @@ HEADERS = {
     "Accept": "application/json",
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json",
-    "Authorization": f"Bearer {API_TOKEN}",
+    "Authorization": f"Bearer {NOTION_API_TOKEN}",
 }
 
 # Database
@@ -90,7 +90,7 @@ def create_or_update_page(
                 "id": "%24v1Q",
                 "type": "people",
                 "people": [
-                    {"id": GITHUB_ASSIGNEES_TO_NOTION[assignee]}
+                    {"id": GH_ASSIGNEES_TO_NOTION[assignee]}
                     for assignee in issue_assignees
                 ],
             },
@@ -103,7 +103,7 @@ def create_or_update_page(
         }
     if not page:
         payload["properties"][STATUS_PROPERTY_NAME] = {
-            "select": {"name": GITHUB_STATUSES_TO_NOTION["opened"]}
+            "select": {"name": GH_STATUSES_TO_NOTION["opened"]}
         }
 
     payload = {**PARENT, **payload}
@@ -171,9 +171,7 @@ def update_labels(page: dict, labels: list) -> None:
 def close_issue(page: dict) -> None:
     payload = {
         "properties": {
-            STATUS_PROPERTY_NAME: {
-                "select": {"name": GITHUB_STATUSES_TO_NOTION["closed"]}
-            },
+            STATUS_PROPERTY_NAME: {"select": {"name": GH_STATUSES_TO_NOTION["closed"]}},
         },
     }
     payload = {**PARENT, **payload}
@@ -184,7 +182,7 @@ def reopen_issue(page: dict) -> None:
     payload = {
         "properties": {
             STATUS_PROPERTY_NAME: {
-                "select": {"name": GITHUB_STATUSES_TO_NOTION["reopened"]}
+                "select": {"name": GH_STATUSES_TO_NOTION["reopened"]}
             },
         },
     }
@@ -205,7 +203,7 @@ def update_assignees(page, issue_assignees: list) -> None:
                 "id": "%24v1Q",
                 "type": "people",
                 "people": [
-                    {"id": GITHUB_ASSIGNEES_TO_NOTION[assignee]}
+                    {"id": GH_ASSIGNEES_TO_NOTION[assignee]}
                     for assignee in issue_assignees
                 ]
                 if issue_assignees

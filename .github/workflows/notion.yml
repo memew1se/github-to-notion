@@ -15,8 +15,8 @@ jobs:
           DEBUGGING: true
           GITHUB2NOTION_PRIORITY: '{"name": "Приоритет", "object": {"select": {"name": "P3"}}}'
           GITHUB2NOTION_PROJECT: '{"name": "Проект", "object": {"select": {"name": "Olymp Group"}}}'
-          GITHUB_ASSIGNEES_TO_NOTION: ${{ secrets.GITHUB_ASSIGNEES_TO_NOTION }}
-          GITHUB_STATUSES_TO_NOTION: ${{ secrets.GITHUB_STATUSES_TO_NOTION }}
+          GH_ASSIGNEES_TO_NOTION: ${{ secrets.GH_ASSIGNEES_TO_NOTION }}
+          GH_STATUSES_TO_NOTION: ${{ secrets.GH_STATUSES_TO_NOTION }}
           LABELS_PROPERTY_NAME: "Вид"
           NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
           STATUS_PROPERTY_NAME: "Статус"
