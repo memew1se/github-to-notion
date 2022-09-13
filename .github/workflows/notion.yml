@@ -12,7 +12,6 @@ jobs:
           ASSIGNEES_PROPERTY_NAME: "Ответственный"
           BRACKET_TYPE: 4
           DATABASE_ID: ${{ secrets.DATABASE_ID }}
-          DEBUGGING: true
           GITHUB2NOTION_PRIORITY: '{"name": "Приоритет", "object": {"select": {"name": "P3"}}}'
           GITHUB2NOTION_PROJECT: '{"name": "Проект", "object": {"select": {"name": "Olymp Group"}}}'
           GH_ASSIGNEES_TO_NOTION: ${{ secrets.GH_ASSIGNEES_TO_NOTION }}

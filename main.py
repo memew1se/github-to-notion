@@ -111,7 +111,7 @@ def create_or_update_page(
         }
     if not page:
         payload["properties"][STATUS_PROPERTY_NAME] = {
-            "select": {"name": GH_STATUSES_TO_NOTION["opened"]}
+            "status": {"name": GH_STATUSES_TO_NOTION["opened"]}
         }
 
     payload = {**PARENT, **payload}
@@ -179,7 +179,7 @@ def update_labels(page: dict, labels: list) -> None:
 def close_issue(page: dict) -> None:
     payload = {
         "properties": {
-            STATUS_PROPERTY_NAME: {"select": {"name": GH_STATUSES_TO_NOTION["closed"]}},
+            STATUS_PROPERTY_NAME: {"status": {"name": GH_STATUSES_TO_NOTION["closed"]}},
         },
     }
     payload = {**PARENT, **payload}
@@ -190,7 +190,7 @@ def reopen_issue(page: dict) -> None:
     payload = {
         "properties": {
             STATUS_PROPERTY_NAME: {
-                "select": {"name": GH_STATUSES_TO_NOTION["reopened"]}
+                "status": {"name": GH_STATUSES_TO_NOTION["reopened"]}
             },
         },
     }
