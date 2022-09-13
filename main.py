@@ -9,15 +9,16 @@ EVENT_PATH = os.environ.get("GITHUB_EVENT_PATH")
 
 # Github secrets and environment variables
 API_TOKEN = os.environ["NOTION_API_TOKEN"]
-AUTHORS_IDS = json.loads(os.environ.get("AUTHORS_IDS"))
 BRACKET_TYPE = os.environ["BRACKET_TYPE"]
 DATABASE_ID = os.environ["DATABASE_ID"]
 DEBUGGING = os.environ.get("DEBUGGING")
 
+ASSIGNEES_PROPERTY_NAME = os.environ["ASSIGNEES_PROPERTY_NAME"]
 LABELS_PROPERTY_NAME = os.environ["LABELS_PROPERTY_NAME"]
 STATUS_PROPERTY_NAME = os.environ["STATUS_PROPERTY_NAME"]
 TITLE_PROPERTY_NAME = os.environ["TITLE_PROPERTY_NAME"]
 
+GITHUB_ASSIGNEES_TO_NOTION = json.loads(os.environ.get("GITHUB_ASSIGNEES_TO_NOTION"))
 GITHUB_STATUSES_TO_NOTION = json.loads(os.environ["GITHUB_STATUSES_TO_NOTION"])
 
 CUSTOM_PROPERTIES = parse_env_variables_to_properties()
@@ -72,8 +73,8 @@ def create_or_update_page(
     page: dict | None,
     issue_title: str,
     issue_number: str,
-    issue_labels: dict,
-    issue_assignee: str,
+    issue_labels: list,
+    issue_assignees: list,
 ) -> dict:
     url = "https://api.notion.com/v1/pages/"
     payload = {
@@ -85,10 +86,13 @@ def create_or_update_page(
                     }
                 ],
             },
-            "Ответственный": {
+            ASSIGNEES_PROPERTY_NAME: {
                 "id": "%24v1Q",
                 "type": "people",
-                "people": [{"id": AUTHORS_IDS[issue_assignee]}],
+                "people": [
+                    {"id": GITHUB_ASSIGNEES_TO_NOTION[assignee]}
+                    for assignee in issue_assignees
+                ],
             },
         },
     }
@@ -118,7 +122,7 @@ def create_or_update_page(
     return json.loads(response.text)
 
 
-def get_page(issue_number: str):
+def get_page(issue_number: str) -> dict:
     url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
     payload = {
         "filter": {
@@ -141,7 +145,7 @@ def get_page(issue_number: str):
         return results[0]
 
 
-def patch_page(page, payload: dict):
+def patch_page(page, payload: dict) -> None:
     url = "https://api.notion.com/v1/pages/" + page["id"]
     payload = {**PARENT, **payload}
     response = requests.patch(url, json=payload, headers=HEADERS)
@@ -152,7 +156,7 @@ def patch_page(page, payload: dict):
         print("/" * 10, "UPDATE LABELS RESPONSE", "/" * 10)
 
 
-def update_labels(page: dict, labels: dict) -> None:
+def update_labels(page: dict, labels: list) -> None:
     payload = {
         "properties": {
             LABELS_PROPERTY_NAME: {
@@ -188,19 +192,24 @@ def reopen_issue(page: dict) -> None:
     patch_page(page, payload)
 
 
-def delete_page(page: dict):
+def delete_page(page: dict) -> None:
     payload = {"archived": True}
     payload = {**PARENT, **payload}
     patch_page(page, payload)
 
 
-def update_assignee(page, author: str):
+def update_assignees(page, issue_assignees: list) -> None:
     payload = {
         "properties": {
-            "Ответственный": {
+            ASSIGNEES_PROPERTY_NAME: {
                 "id": "%24v1Q",
                 "type": "people",
-                "people": [{"id": AUTHORS_IDS[author]}],
+                "people": [
+                    {"id": GITHUB_ASSIGNEES_TO_NOTION[assignee]}
+                    for assignee in issue_assignees
+                ]
+                if issue_assignees
+                else [],
             },
         },
     }
@@ -208,21 +217,7 @@ def update_assignee(page, author: str):
     patch_page(page, payload)
 
 
-def remove_assignee(page):
-    payload = {
-        "properties": {
-            "Ответственный": {
-                "id": "%24v1Q",
-                "type": "people",
-                "people": [],
-            },
-        },
-    }
-    payload = {**PARENT, **payload}
-    patch_page(page, payload)
-
-
-def set_body(page: dict):
+def set_body(page: dict) -> None:
     pass
 
 
@@ -236,18 +231,13 @@ def main():
     issue_title = EVENT_JSON["issue"]["title"]
     issue_number = EVENT_JSON["issue"]["number"]
     issue_labels = EVENT_JSON["issue"]["labels"]
-
-    try:
-        issue_author = EVENT_JSON["issue"]["assignee"]["login"]
-    except TypeError as e:
-        print("!" * 15, "ERROR", "!" * 15)
-        print(e)
-        print("!" * 15, "ERROR", "!" * 15)
-        issue_author = ""
+    issue_assignees = [
+        assignee["login"] for assignee in EVENT_JSON["issue"]["assignees"]
+    ]
 
     if action_type == "opened":
         page = create_or_update_page(
-            None, issue_title, issue_number, issue_labels, issue_author
+            None, issue_title, issue_number, issue_labels, issue_assignees
         )
         set_body(page)
     else:
@@ -256,7 +246,7 @@ def main():
         match action_type:
             case "edited":
                 create_or_update_page(
-                    page, issue_title, issue_number, issue_labels, issue_author
+                    page, issue_title, issue_number, issue_labels, issue_assignees
                 )
             case "deleted":
                 delete_page(page)
@@ -264,10 +254,8 @@ def main():
                 close_issue(page)
             case "reopened":
                 reopen_issue(page)
-            case "assigned":
-                update_assignee(page, issue_author)
-            case "unassigned":
-                remove_assignee(page)
+            case "assigned" | "unassigned":
+                update_assignees(page, issue_assignees)
             case "labeled" | "unlabeled":
                 update_labels(page, issue_labels)
             case _:
