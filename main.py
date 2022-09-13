@@ -14,8 +14,11 @@ BRACKET_TYPE = os.environ["BRACKET_TYPE"]
 DATABASE_ID = os.environ["DATABASE_ID"]
 DEBUGGING = os.environ.get("DEBUGGING")
 
-TITLE_PROPERTY_NAME = os.environ["TITLE_PROPERTY_NAME"]
 LABELS_PROPERTY_NAME = os.environ["LABELS_PROPERTY_NAME"]
+STATUS_PROPERTY_NAME = os.environ["STATUS_PROPERTY_NAME"]
+TITLE_PROPERTY_NAME = os.environ["TITLE_PROPERTY_NAME"]
+
+GITHUB_STATUSES_TO_NOTION = json.loads(os.environ["GITHUB_STATUSES_TO_NOTION"])
 
 CUSTOM_PROPERTIES = parse_env_variables_to_properties()
 
@@ -35,14 +38,6 @@ PARENT = {
     }
 }
 
-# Property
-ISSUE_STATES = {
-    "opened": "Запланировано",
-    "closed": "Сделано",
-    "reopened": "Запланировано",
-}
-
-# Property
 BRACKETS = {
     "1": {
         "left_bracket": "(",
@@ -103,7 +98,9 @@ def create_or_update_page(
             "multi_select": [{"name": label["name"]} for label in issue_labels]
         }
     if not page:
-        payload["properties"]["Статус"] = {"select": {"name": ISSUE_STATES["opened"]}}
+        payload["properties"][STATUS_PROPERTY_NAME] = {
+            "select": {"name": GITHUB_STATUSES_TO_NOTION["opened"]}
+        }
 
     payload = {**PARENT, **payload}
 
@@ -167,10 +164,24 @@ def update_labels(page: dict, labels: dict) -> None:
     patch_page(page, payload)
 
 
-def update_status(page: dict) -> None:
+def close_issue(page: dict) -> None:
     payload = {
         "properties": {
-            "Статус": {"select": {"name": ISSUE_STATES["closed"]}},
+            STATUS_PROPERTY_NAME: {
+                "select": {"name": GITHUB_STATUSES_TO_NOTION["closed"]}
+            },
+        },
+    }
+    payload = {**PARENT, **payload}
+    patch_page(page, payload)
+
+
+def reopen_issue(page: dict) -> None:
+    payload = {
+        "properties": {
+            STATUS_PROPERTY_NAME: {
+                "select": {"name": GITHUB_STATUSES_TO_NOTION["reopened"]}
+            },
         },
     }
     payload = {**PARENT, **payload}
@@ -252,7 +263,10 @@ def main():
             delete_page(page)
 
         elif action_type == "closed":
-            update_status(page)
+            close_issue(page)
+
+        elif action_type == "reopened":
+            reopen_issue(page)
 
         elif action_type == "assigned":
             update_assignee(page, issue_author)
