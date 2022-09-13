@@ -250,37 +250,30 @@ def main():
             None, issue_title, issue_number, issue_labels, issue_author
         )
         set_body(page)
-
     else:
         page = get_page(issue_number)
 
-        if action_type == "edited":
-            create_or_update_page(
-                page, issue_title, issue_number, issue_labels, issue_author
-            )
-
-        elif action_type == "deleted":
-            delete_page(page)
-
-        elif action_type == "closed":
-            close_issue(page)
-
-        elif action_type == "reopened":
-            reopen_issue(page)
-
-        elif action_type == "assigned":
-            update_assignee(page, issue_author)
-
-        elif action_type == "unassigned":
-            remove_assignee(page)
-
-        elif action_type == "labeled" or action_type == "unlabeled":
-            update_labels(page, issue_labels)
-
-        else:
-            print("-" * 15, "WARNING", "-" * 15)
-            print(f"Unsupported action type! Action: {action_type}")
-            print("-" * 15, "WARNING", "-" * 15)
+        match action_type:
+            case "edited":
+                create_or_update_page(
+                    page, issue_title, issue_number, issue_labels, issue_author
+                )
+            case "deleted":
+                delete_page(page)
+            case "closed":
+                close_issue(page)
+            case "reopened":
+                reopen_issue(page)
+            case "assigned":
+                update_assignee(page, issue_author)
+            case "unassigned":
+                remove_assignee(page)
+            case "labeled" | "unlabeled":
+                update_labels(page, issue_labels)
+            case _:
+                print("-" * 15, "WARNING", "-" * 15)
+                print(f"Unsupported action type! Action: {action_type}")
+                print("-" * 15, "WARNING", "-" * 15)
 
 
 if __name__ == "__main__":
