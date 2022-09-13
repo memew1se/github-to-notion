@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: github2notion
-        uses: memew1se/github-to-notion@v0.3.2
+        uses: memew1se/github-to-notion@v0.3.3
         env:
           ASSIGNEES_PROPERTY_NAME: "Ответственный"
           BRACKET_TYPE: 4
