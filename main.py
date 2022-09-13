@@ -18,10 +18,18 @@ LABELS_PROPERTY_NAME = os.environ["LABELS_PROPERTY_NAME"]
 STATUS_PROPERTY_NAME = os.environ["STATUS_PROPERTY_NAME"]
 TITLE_PROPERTY_NAME = os.environ["TITLE_PROPERTY_NAME"]
 
-GH_ASSIGNEES_TO_NOTION = json.loads(os.environ.get("GH_ASSIGNEES_TO_NOTION"))
-GH_STATUSES_TO_NOTION = json.loads(os.environ["GH_STATUSES_TO_NOTION"])
-
 CUSTOM_PROPERTIES = parse_env_variables_to_properties()
+
+if DEBUGGING:
+    print(
+        os.environ["GH_ASSIGNEES_TO_NOTION"],
+        os.environ["GH_STATUSES_TO_NOTION"],
+        CUSTOM_PROPERTIES,
+        sep="\n-----\n",
+    )
+
+GH_ASSIGNEES_TO_NOTION = json.loads(os.environ["GH_ASSIGNEES_TO_NOTION"])
+GH_STATUSES_TO_NOTION = json.loads(os.environ["GH_STATUSES_TO_NOTION"])
 
 # Authentication
 HEADERS = {
