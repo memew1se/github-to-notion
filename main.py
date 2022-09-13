@@ -29,6 +29,7 @@ if DEBUGGING:
     )
 
 GH_ASSIGNEES_TO_NOTION = json.loads(os.environ["GH_ASSIGNEES_TO_NOTION"])
+GH_LABELS_TO_NOTION = json.loads(os.environ["GH_LABELS_TO_NOTION"])
 GH_STATUSES_TO_NOTION = json.loads(os.environ["GH_STATUSES_TO_NOTION"])
 
 # Authentication
@@ -107,7 +108,9 @@ def create_or_update_page(
 
     if issue_labels:
         payload["properties"][LABELS_PROPERTY_NAME] = {
-            "multi_select": [{"name": label["name"]} for label in issue_labels]
+            "multi_select": [
+                {"name": GH_LABELS_TO_NOTION[label["name"]]} for label in issue_labels
+            ]
         }
     if not page:
         payload["properties"][STATUS_PROPERTY_NAME] = {
@@ -145,10 +148,10 @@ def get_page(issue_number: str) -> dict:
     pages_amount = len(results)
 
     if pages_amount != 1:
-        raise ValueError(
-            f"Cannot find a specific page. Number of pages found: {pages_amount}. "
+        print(f"Cannot find a specific page. Number of pages found: {pages_amount}.")
+        if DEBUGGING:
             f"Urls are: {', '.join([page['url'] for page in results])}"
-        )
+        raise ValueError("Cannot find a specific page.")
     else:
         return results[0]
 
@@ -168,7 +171,9 @@ def update_labels(page: dict, labels: list) -> None:
     payload = {
         "properties": {
             LABELS_PROPERTY_NAME: {
-                "multi_select": [{"name": label["name"]} for label in labels]
+                "multi_select": [
+                    {"name": GH_LABELS_TO_NOTION[label["name"]]} for label in labels
+                ]
             },
         },
     }
